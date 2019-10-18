@@ -250,7 +250,6 @@ class CPU:
         Handy function to print out the CPU state. You might want to call this
         from run() if you need help debugging.
         """
-
         print(f"TRACE: %02X | %02X %02X %02X |" % (
             self.pc,
             #self.fl,
@@ -351,10 +350,10 @@ class CPU:
         """Halt the CPU (and exit the emulator)."""
         self.flags |= 0b10000000
 
-    def INT(self, register): #TODO
+    def INT(self, register):
         """Issue the interrupt number stored in the given register."""
         # This will set the _n_th bit in the IS register to the value in the given register.
-        pass
+        self.reg[0b110] |= (0b00000001 << self.reg[register])
 
     def IRET(self):
         """Return from an interrupt handler."""
