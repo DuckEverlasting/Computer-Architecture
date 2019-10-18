@@ -265,19 +265,21 @@ class CPU:
         print()
 
     def interrupt(self, i_num):
+        self.reg[0b101] = 0b00000000
         self.reg[0b110] &= ~(0b00000001 << i_num)
         self.alu("DEC", (0b111))
         self.ram_write(self.reg[0b111], self.pc)
         self.alu("DEC", (0b111))
         self.ram_write(self.reg[0b111], self.flags)
-        self.POP(0b000)
-        self.POP(0b001)
-        self.POP(0b010)
-        self.POP(0b011)
-        self.POP(0b100)
-        self.POP(0b101)
-        self.POP(0b110)
-        self.pc = i_num | 0b11111000
+        self.PUSH(0b000)
+        self.PUSH(0b001)
+        self.PUSH(0b010)
+        self.PUSH(0b011)
+        self.PUSH(0b100)
+        self.PUSH(0b101)
+        self.PUSH(0b110)
+        self.pc = self.ram_read(i_num | 0b11111000)
+
 
     def run(self):
         """Run the CPU."""
@@ -295,7 +297,6 @@ class CPU:
             for i_num in range(0b1000):
                 if (self.reg[0b101] & (0b00000001 << i_num)) & (self.reg[0b110] & (0b00000001 << i_num)):
                     self.interrupt(i_num)
-                    break
 
             self.ir = self.pc
             self.pc = self.ram_read(self.pc)
@@ -372,7 +373,8 @@ class CPU:
         self.flags = self.ram_read(self.reg[0b111])
         self.alu("INC", (0b111))
         self.ir = self.ram_read(self.reg[0b111])
-        self.alu("INC", (0b111))        
+        self.alu("INC", (0b111))
+        self.reg[0b101] = 0b11111111
 
     def JEQ(self, register):
         """If equal flag is set (true), jump to the address stored in the given register."""
