@@ -1,6 +1,7 @@
 """CPU functionality."""
 
 import sys
+import msvcrt
 from datetime import datetime
 
 disp_table = {
@@ -166,10 +167,16 @@ class CPU:
             # If registerA is greater than registerB, set the Greater-than `G` flag to 1, otherwise set it to 0.
             if self.reg[reg_a] < self.reg[reg_b]:
                 self.flags = self.flags | 0b00000100
-            elif self.reg[reg_a] < self.reg[reg_b]:
+            else:
+                self.flags = self.flags & 0b11111011
+            if self.reg[reg_a] > self.reg[reg_b]:
                 self.flags = self.flags | 0b00000010
             else:
+                self.flags = self.flags & 0b11111101
+            if self.reg[reg_a] == self.reg[reg_b]:
                 self.flags = self.flags | 0b00000001
+            else:
+                self.flags = self.flags & 0b11111110
         elif op == "INC":
             """
             Increment (add 1 to) the value in the given register.
@@ -281,6 +288,10 @@ class CPU:
 
             if self.clock[0b111] & 0b00000001:
                 self.reg[0b110] |= 0b00000001
+            
+            if msvcrt.kbhit():
+                self.reg[0b110] |= 0b00000010
+                self.ram_write(0b11110100, ord(msvcrt.getwch()))
 
             for i_num in range(0b1000):
                 if (self.reg[0b101] & (0b00000001 << i_num)) & (self.reg[0b110] & (0b00000001 << i_num)):
@@ -291,7 +302,6 @@ class CPU:
             self.pc = self.ram_read(self.pc)
 
             if self.pc in disp_table:
-
                 if self.pc >> 0b110 == 0b00:
                     method = getattr(self, disp_table[self.pc])
                     method()
@@ -346,7 +356,7 @@ class CPU:
         # This will set the _n_th bit in the IS register to the value in the given register.
         pass
 
-    def IRET(self): #TODO
+    def IRET(self):
         """Return from an interrupt handler."""
         # The following steps are executed:
             # Registers R6-R0 are popped off the stack in that order.
@@ -367,7 +377,7 @@ class CPU:
 
     def JEQ(self, register):
         """If equal flag is set (true), jump to the address stored in the given register."""
-        if self.flags & 0b00000010:
+        if self.flags & 0b00000001:
             self.ir = self.reg[register]
         else:
             self.ir += 0b10
@@ -408,7 +418,7 @@ class CPU:
     def JNE(self, register):
         """If E flag is clear (false, 0), jump to the address stored in the given register."""
         if not self.flags & 0b00000001:
-            self.pc = self.reg[register]
+            self.ir = self.reg[register]
         else:
             self.ir += 0b10
 
